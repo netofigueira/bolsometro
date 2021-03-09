@@ -1,0 +1,6 @@
+Execution failed on sql 'SELECT * FROM sentiment ORDER BY unix DESC LIMIT 500': no such table: sentiment
+Execution failed on sql 'SELECT * FROM sentiment ORDER BY unix DESC LIMIT 1000': no such table: sentiment
+Execution failed on sql 'SELECT * FROM sentiment ORDER BY unix DESC LIMIT 1000': no such table: sentiment
+Execution failed on sql 'SELECT * FROM sentiment ORDER BY unix DESC LIMIT 500': no such table: sentiment
+Execution failed on sql 'SELECT * FROM sentiment ORDER BY unix DESC LIMIT 1000': no such table: sentiment
+Execution failed on sql 'SELECT * FROM sentiment ORDER BY unix DESC LIMIT 500': no such table: sentiment
