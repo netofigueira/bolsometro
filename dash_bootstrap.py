@@ -169,7 +169,7 @@ def update_gauge(input_data):
         s_array = df.sentiment.values
         df['sentiment'] = np.interp(s_array, (s_array.min(), s_array.max()), (-10,10) )
 
-        neg = np.abs(df[(df.sentiment < 0)].sentiment.mean())
+        neg = df[(df.sentiment < 0)].sentiment.mean()
 
         df['sentiment_smoothed'] = df['sentiment'].rolling(int(len(df)/100)).mean()
 
@@ -180,15 +180,15 @@ def update_gauge(input_data):
             title = {'text': "Bolsometro"},
             #delta = {'reference': 8, 'increasing': {'color': "Green"}},
             gauge = {
-                'axis': {'range': [None, 10], 'tickwidth': 1, 'tickcolor': "#EF553B"},
+                'axis': {'range': [0, -10], 'tickwidth': 1, 'tickcolor': "#EF553B"},
                 'bar': {'color': "#453938"},
                 'bgcolor': "white",
                 'borderwidth': 2,
                 'bordercolor': "gray",
                 'steps': [
-                    {'range': [0, 5], 'color': 'white'},
-                    {'range': [5, 6.5], 'color': '#ffb0a8'},
-                    {'range': [6.5, 8], 'color': '#EF553B'}],
+                    {'range': [0, -5], 'color': 'white'},
+                    {'range': [-5, -6.5], 'color': '#ffb0a8'},
+                    {'range': [-6.5, -8], 'color': '#EF553B'}],
                 'threshold': {
                     'line': {'color': "red", 'width': 4},
                     'thickness': 0.75,
@@ -268,4 +268,4 @@ def update_recent_tweets(input_data):
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=8058, debug=True)
+    app.run_server(host='0.0.0.0', port=8050, debug=True)
