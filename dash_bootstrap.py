@@ -63,12 +63,7 @@ app.layout = dbc.Container(
             color="dark",
             dark=True,
         ),
-
-
-            
-        
-
-
+                  
 
         dbc.Card(
             id='card', 
@@ -91,16 +86,20 @@ app.layout = dbc.Container(
                     ],
                     id="popover",
                     is_open=False,
-                    target="header",
+                    target="popover-target",
                 ),          
             ]
-            ),
+        ),
 
+        dbc.Row([ 
+                                dbc.Col(dcc.Graph(id='live-graph', animate=True ) ), 
+                    
+                    ]),
 
-            dbc.Row(className='row', 
-                    children=[dbc.Col(dcc.Graph(id='live-graph', animate=True) ),
+        dbc.Row([                    
+                             
                               dbc.Col(html.Div(dcc.Graph(id='my-gauge', animate=True)) ),
-                                                                
+
                                                                  ]),
             dcc.Interval(
                 id='graph-update',
@@ -220,18 +219,39 @@ def update_graph_scatter(input_data):
         df['date'] = df.date.dt.tz_localize('UTC').dt.tz_convert('America/Sao_Paulo')
         df.set_index('date', inplace=True)
 
-        df = df.resample('10s').mean()
-        X = df.index
-        Y = df.sentiment_smoothed.round(decimals=2)
+        df_bolso = df[df.tweet.str.contains('bolsonaro', case=False)]
+
+        df_lula = df[df.tweet.str.contains('lula', case=False)]
+
+        #df = df.resample('10s').mean()
+        df_bolso = df_bolso.resample('10s').mean()
+        #X = df.index
+       
+        
+        X = df_bolso.index
+
+        Y= df_bolso.sentiment_smoothed.round(decimals=2)
+        Y2 = df_lula.sentiment_smoothed.round(decimals=2)
 
         data = plotly.graph_objs.Scatter(
                 x=X,
                 y=Y,
-                name='Scatter',
-                mode= 'lines'
+                name='Bolsonaro',
+                mode= 'lines',
+                line = dict(color = 'green')
                 )
 
-        return {'data': [data],'layout' : go.Layout(xaxis=dict(range=[min(X),max(X)]),
+
+        data2 = plotly.graph_objs.Scatter(
+                x=X,
+                y=Y2,
+                name='Lula',
+                mode = 'lines',
+                line = dict(color = 'red')
+          
+                )
+
+        return {'data': [data, data2],'layout' : go.Layout(xaxis=dict(range=[min(X),max(X)]),
                                                     yaxis=dict(range=[-5,5]),)}
 
     except Exception as e:
