@@ -75,7 +75,7 @@ while True:
         auth = OAuthHandler(ckey, csecret)
         auth.set_access_token(atoken, asecret)
         twitterStream = Stream(auth, listener())
-        twitterStream.filter(track=["Bolsonaro"], languages=['pt'])
+        twitterStream.filter(track=["Bolsonaro", "Lula"], languages=['pt'])
     except Exception as e:
         print(str(e))
         time.sleep(5)

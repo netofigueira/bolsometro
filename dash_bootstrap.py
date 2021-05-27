@@ -58,20 +58,25 @@ app.layout = dbc.Container(
                     label="Contato",
                 ),
             ],
-            brand="Estão falando mal de mim?",
+            brand="Tendência de Sentimento no Twitter",
             brand_href="#",
             color="dark",
             dark=True,
         ),
+                  
 
 
 
+        dbc.Col([ 
+                                dbc.Col(dcc.Graph(id='live-graph', animate=True ) ), 
+                    
+                    ]),
+###
+ #       dbc.Row([                    
+ #                            
+  #                            dbc.Col(html.Div(dcc.Graph(id='my-gauge', animate=True)) ),
 
-            dbc.Row(className='row', 
-                    children=[dbc.Col(dcc.Graph(id='live-graph', animate=True) ),
-                              dbc.Col(html.Div(dcc.Graph(id='my-gauge', animate=True)) ),
-                                                                
-                                                                 ]),
+   #                                                              ]),
             dcc.Interval(
                 id='graph-update',
                 interval= 800,
@@ -81,7 +86,7 @@ app.layout = dbc.Container(
                 interval= 800,
             ),            
 
-        html.Div(html.H2('Tweets mais Negativos')),
+        html.Div(html.H2('Tweets recentes ao vivo')),
         html.Hr(),
         html.Div(className='row', children=[html.Div(id="recent-tweets-table")] ),
 
@@ -93,9 +98,16 @@ app.layout = dbc.Container(
         ),
     ]
 )
+def color_select(d):
+    if d > 5:
+        return "#95D2EC"
+    if d < -5:
+        return "#FF4242"
+    else:
+         return "#FFFFFF"
 
 def generate_table(df, max_rows=10):
-    return html.Table(className="responsive-table",
+    return html.Table(className="table",
                       children=[
                           html.Thead(
                               html.Tr(
@@ -110,14 +122,14 @@ def generate_table(df, max_rows=10):
                               html.Tr(
                                   children=[
                                       html.Td(data) for data in d
-                                      ],
+                                      ], style={'background-color':color_select(d[1])}
                                                                         )
                                for d in df.values.tolist()])
                           ]
     )
 
 
-
+"""
 @app.callback(
     Output("popover", "is_open"),
     [Input("popover-target", "n_clicks")],
@@ -139,7 +151,7 @@ def update_gauge(input_data):
         s_array = df.sentiment.values
         df['sentiment'] = np.interp(s_array, (s_array.min(), s_array.max()), (-10,10) )
 
-        neg = np.abs(df[(df.sentiment < 0)].sentiment.mean())
+        neg = df[(df.sentiment < 0)].sentiment.mean()
 
         df['sentiment_smoothed'] = df['sentiment'].rolling(int(len(df)/100)).mean()
 
@@ -150,15 +162,15 @@ def update_gauge(input_data):
             title = {'text': "Bolsometro"},
             #delta = {'reference': 8, 'increasing': {'color': "Green"}},
             gauge = {
-                'axis': {'range': [None, 10], 'tickwidth': 1, 'tickcolor': "#EF553B"},
+                'axis': {'range': [0, -10], 'tickwidth': 1, 'tickcolor': "#EF553B"},
                 'bar': {'color': "#453938"},
                 'bgcolor': "white",
                 'borderwidth': 2,
                 'bordercolor': "gray",
                 'steps': [
-                    {'range': [0, 5], 'color': 'white'},
-                    {'range': [5, 6.5], 'color': '#ffb0a8'},
-                    {'range': [6.5, 8], 'color': '#EF553B'}],
+                    {'range': [0, -5], 'color': 'white'},
+                    {'range': [-5, -6.5], 'color': '#ffb0a8'},
+                    {'range': [-6.5, -8], 'color': '#EF553B'}],
                 'threshold': {
                     'line': {'color': "red", 'width': 4},
                     'thickness': 0.75,
@@ -170,38 +182,60 @@ def update_gauge(input_data):
         with open('errors.txt','a') as f:
             f.write(str(e))
             f.write('\n')
-    
+"""
+   
 @app.callback(Output('live-graph', 'figure'),
                 [Input('graph-update', 'n_intervals')])
 def update_graph_scatter(input_data):
     try:
         conn = sqlite3.connect('twitter.db')
         c = conn.cursor()
-        df = pd.read_sql("SELECT * FROM sentiment ORDER BY unix DESC LIMIT 1000", conn)
+        df = pd.read_sql("SELECT * FROM sentiment ORDER BY unix DESC LIMIT 2000", conn)
         df.sort_values('unix', inplace=True)
 
         s_array = df.sentiment.values
         df['sentiment'] = np.interp(s_array, (s_array.min(), s_array.max()), (-10,10) )
 
-        df['sentiment_smoothed'] = df['sentiment'].rolling(int(len(df)/10)).mean()
+        df['sentiment_smoothed'] = df['sentiment'].rolling(int(len(df)/500)).mean()
         df.dropna(inplace=True)
         df['date'] = pd.to_datetime(df['unix'],unit='ms')
         # converting to são paulo time. 
         df['date'] = df.date.dt.tz_localize('UTC').dt.tz_convert('America/Sao_Paulo')
         df.set_index('date', inplace=True)
 
-        df = df.resample('10s').mean()
-        X = df.index
-        Y = df.sentiment_smoothed.round(decimals=2)
+        df_bolso = df[df.tweet.str.contains('bolsonaro', case=False)]
+
+        df_lula = df[df.tweet.str.contains('lula', case=False)]
+
+        #df = df.resample('10s').mean()
+        df_bolso = df_bolso.resample('60s').mean()
+        #X = df.index
+       
+        
+        X = df_bolso.index
+
+        Y= df_bolso.sentiment_smoothed.round(decimals=2)
+        Y2 = df_lula.sentiment_smoothed.round(decimals=2)
 
         data = plotly.graph_objs.Scatter(
                 x=X,
                 y=Y,
-                name='Scatter',
-                mode= 'lines'
+                name='Bolsonaro',
+                mode= 'lines',
+                line = dict(color = 'green')
                 )
 
-        return {'data': [data],'layout' : go.Layout(xaxis=dict(range=[min(X),max(X)]),
+
+        data2 = plotly.graph_objs.Scatter(
+                x=X,
+                y=Y2,
+                name='Lula',
+                mode = 'lines',
+                line = dict(color = 'red')
+          
+                )
+
+        return {'data': [data, data2],'layout' : go.Layout(xaxis=dict(range=[min(X),max(X)]),
                                                     yaxis=dict(range=[-5,5]),)}
 
     except Exception as e:
@@ -227,7 +261,6 @@ def update_recent_tweets(input_data):
     # converting to são paulo time. 
     df['date'] = df.date.dt.tz_localize('UTC').dt.tz_convert('America/Sao_Paulo')
     df.set_index('date', inplace=True)
-    df = df[(df.sentiment < -0.4)]
     return generate_table(df, max_rows=10)
 
 
@@ -238,4 +271,4 @@ def update_recent_tweets(input_data):
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=8058, debug=True)
+    app.run_server(host='0.0.0.0', port=8050, debug=True)
