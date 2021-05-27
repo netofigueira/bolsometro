@@ -65,36 +65,6 @@ app.layout = dbc.Container(
         ),
 
 
-            
-        
-
-
-
-        dbc.Card(
-            id='card', 
-            children=[dbc.CardImg(src='/assets/bolso_drawn.png',
-             style={"width": 1100, "height": 400,'textAlign':'center'},
-                           className='card-img-bottom'),
-                dbc.CardHeader("Análise da popularidade do presidente Bolsonaro em tempo real", id='header'),
-                dbc.Button(
-                    "Como funciona", id="popover-target", color="dark"
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Medidores"),
-                        dbc.PopoverBody("A análise textual é feita através do Léxico para Inferência Adaptada (LeIA) "\
-                                        "Cada tweet retorna um valor escalado entre -10 (extremamente negativo) e 10 (extremamente positivo)"\
-                                        "o gráfico a direita mostra a média de sentimento dos ultimos tweets a cada segundo. " \
-                                        "o medidor à esquerda faz a média dos ultimos 500 tweets negativos apenas,"\
-                                        "e mostra o resultado numa escala de 0 a 10 de negatividade"\
-                                ),
-                    ],
-                    id="popover",
-                    is_open=False,
-                    target="header",
-                ),          
-            ]
-            ),
 
 
             dbc.Row(className='row', 
