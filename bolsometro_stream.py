@@ -48,25 +48,17 @@ create_table()
 
 class listener(StreamListener):
 
-#    def on_status(self, status):
-##        if status.retweeted_status:
-#            return
-    
     def on_data(self, data):
         try:
             data = json.loads(data)
             tweet = unidecode(data['text'])
-            
             time_ms = data['timestamp_ms']
             vs = analyzer.polarity_scores(tweet)
             sentiment = vs['compound']
-            print(tweet)
-            if ('RT @' not in tweet):
-
-                print(time_ms, tweet, sentiment)
-                c.execute("INSERT INTO sentiment (unix, tweet, sentiment) VALUES (?, ?, ?)",
-                    (time_ms, tweet, sentiment))
-                conn.commit()
+            #print(time_ms, tweet, sentiment)
+            c.execute("INSERT INTO sentiment (unix, tweet, sentiment) VALUES (?, ?, ?)",
+                  (time_ms, tweet, sentiment))
+            conn.commit()
 
         except KeyError as e:
             print(str(e))
@@ -83,7 +75,7 @@ while True:
         auth = OAuthHandler(ckey, csecret)
         auth.set_access_token(atoken, asecret)
         twitterStream = Stream(auth, listener())
-        twitterStream.filter(track=["Bolsonaro, Lula"], languages=['pt'])
+        twitterStream.filter(track=["Bolsonaro", "Lula"], languages=['pt'])
     except Exception as e:
         print(str(e))
         time.sleep(5)

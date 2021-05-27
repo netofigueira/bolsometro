@@ -58,49 +58,25 @@ app.layout = dbc.Container(
                     label="Contato",
                 ),
             ],
-            brand="Estão falando mal de mim?",
+            brand="Tendência de Sentimento no Twitter",
             brand_href="#",
             color="dark",
             dark=True,
         ),
                   
 
-        dbc.Card(
-            id='card', 
-            children=[dbc.CardImg(src='/assets/bolso_drawn.png',
-             style={"width": 1100, "height": 400,'textAlign':'center'},
-                           className='card-img-bottom'),
-                dbc.CardHeader("Análise da popularidade do presidente Bolsonaro em tempo real", id='header'),
-                dbc.Button(
-                    "Como funciona", id="popover-target", color="dark"
-                ),
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Medidores"),
-                        dbc.PopoverBody("A análise textual é feita através do Léxico para Inferência Adaptada (LeIA) "\
-                                        "Cada tweet retorna um valor escalado entre -10 (extremamente negativo) e 10 (extremamente positivo)"\
-                                        "o gráfico a direita mostra a média de sentimento dos ultimos tweets a cada segundo. " \
-                                        "o medidor à esquerda faz a média dos ultimos 500 tweets negativos apenas,"\
-                                        "e mostra o resultado numa escala de 0 a 10 de negatividade"\
-                                ),
-                    ],
-                    id="popover",
-                    is_open=False,
-                    target="popover-target",
-                ),          
-            ]
-        ),
 
-        dbc.Row([ 
+
+        dbc.Col([ 
                                 dbc.Col(dcc.Graph(id='live-graph', animate=True ) ), 
                     
                     ]),
+###
+ #       dbc.Row([                    
+ #                            
+  #                            dbc.Col(html.Div(dcc.Graph(id='my-gauge', animate=True)) ),
 
-        dbc.Row([                    
-                             
-                              dbc.Col(html.Div(dcc.Graph(id='my-gauge', animate=True)) ),
-
-                                                                 ]),
+   #                                                              ]),
             dcc.Interval(
                 id='graph-update',
                 interval= 800,
@@ -110,7 +86,7 @@ app.layout = dbc.Container(
                 interval= 800,
             ),            
 
-        html.Div(html.H2('Tweets mais Negativos')),
+        html.Div(html.H2('Tweets recentes ao vivo')),
         html.Hr(),
         html.Div(className='row', children=[html.Div(id="recent-tweets-table")] ),
 
@@ -122,9 +98,16 @@ app.layout = dbc.Container(
         ),
     ]
 )
+def color_select(d):
+    if d > 5:
+        return "#95D2EC"
+    if d < -5:
+        return "#FF4242"
+    else:
+         return "#FFFFFF"
 
 def generate_table(df, max_rows=10):
-    return html.Table(className="responsive-table",
+    return html.Table(className="table",
                       children=[
                           html.Thead(
                               html.Tr(
@@ -139,14 +122,14 @@ def generate_table(df, max_rows=10):
                               html.Tr(
                                   children=[
                                       html.Td(data) for data in d
-                                      ],
+                                      ], style={'background-color':color_select(d[1])}
                                                                         )
                                for d in df.values.tolist()])
                           ]
     )
 
 
-
+"""
 @app.callback(
     Output("popover", "is_open"),
     [Input("popover-target", "n_clicks")],
@@ -199,20 +182,21 @@ def update_gauge(input_data):
         with open('errors.txt','a') as f:
             f.write(str(e))
             f.write('\n')
-    
+"""
+   
 @app.callback(Output('live-graph', 'figure'),
                 [Input('graph-update', 'n_intervals')])
 def update_graph_scatter(input_data):
     try:
         conn = sqlite3.connect('twitter.db')
         c = conn.cursor()
-        df = pd.read_sql("SELECT * FROM sentiment ORDER BY unix DESC LIMIT 1000", conn)
+        df = pd.read_sql("SELECT * FROM sentiment ORDER BY unix DESC LIMIT 2000", conn)
         df.sort_values('unix', inplace=True)
 
         s_array = df.sentiment.values
         df['sentiment'] = np.interp(s_array, (s_array.min(), s_array.max()), (-10,10) )
 
-        df['sentiment_smoothed'] = df['sentiment'].rolling(int(len(df)/10)).mean()
+        df['sentiment_smoothed'] = df['sentiment'].rolling(int(len(df)/500)).mean()
         df.dropna(inplace=True)
         df['date'] = pd.to_datetime(df['unix'],unit='ms')
         # converting to são paulo time. 
@@ -224,7 +208,7 @@ def update_graph_scatter(input_data):
         df_lula = df[df.tweet.str.contains('lula', case=False)]
 
         #df = df.resample('10s').mean()
-        df_bolso = df_bolso.resample('10s').mean()
+        df_bolso = df_bolso.resample('60s').mean()
         #X = df.index
        
         
@@ -277,7 +261,6 @@ def update_recent_tweets(input_data):
     # converting to são paulo time. 
     df['date'] = df.date.dt.tz_localize('UTC').dt.tz_convert('America/Sao_Paulo')
     df.set_index('date', inplace=True)
-    df = df[(df.sentiment < -0.4)]
     return generate_table(df, max_rows=10)
 
 
