@@ -81,10 +81,10 @@ app.layout = dbc.Container(
                 id='graph-update',
                 interval= 800,
             ),
-            dcc.Interval(
-                id='my-gauge-update',
-                interval= 800,
-            ),            
+         #   dcc.Interval(
+          #      id='my-gauge-update',
+           #     interval= 800,
+          #  ),            
 
         html.Div(html.H2('Tweets recentes ao vivo')),
         html.Hr(),
@@ -93,7 +93,7 @@ app.layout = dbc.Container(
 
         dcc.Interval(
             id='recent-table-update',
-            interval= 4*10**3,
+            interval= 8*10**3,
             #n_intervals=2
         ),
     ]
@@ -190,7 +190,7 @@ def update_graph_scatter(input_data):
     try:
         conn = sqlite3.connect('twitter.db')
         c = conn.cursor()
-        df = pd.read_sql("SELECT * FROM sentiment ORDER BY unix DESC LIMIT 2000", conn)
+        df = pd.read_sql("SELECT * FROM sentiment ORDER BY unix DESC LIMIT 1000", conn)
         df.sort_values('unix', inplace=True)
 
         s_array = df.sentiment.values
@@ -208,7 +208,7 @@ def update_graph_scatter(input_data):
         df_lula = df[df.tweet.str.contains('lula', case=False)]
 
         #df = df.resample('10s').mean()
-        df_bolso = df_bolso.resample('60s').mean()
+        df_bolso = df_bolso.resample('10s').mean()
         #X = df.index
        
         
@@ -236,7 +236,7 @@ def update_graph_scatter(input_data):
                 )
 
         return {'data': [data, data2],'layout' : go.Layout(xaxis=dict(range=[min(X),max(X)]),
-                                                    yaxis=dict(range=[-5,5]),)}
+                                                    yaxis=dict(range=[-10,10]),)}
 
     except Exception as e:
         with open('errors.txt','a') as f:

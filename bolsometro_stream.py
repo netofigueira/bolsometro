@@ -55,10 +55,12 @@ class listener(StreamListener):
             time_ms = data['timestamp_ms']
             vs = analyzer.polarity_scores(tweet)
             sentiment = vs['compound']
-            #print(time_ms, tweet, sentiment)
-            c.execute("INSERT INTO sentiment (unix, tweet, sentiment) VALUES (?, ?, ?)",
-                  (time_ms, tweet, sentiment))
-            conn.commit()
+            
+            if 'RT' not in tweet:
+                print(time_ms, tweet, sentiment)
+                c.execute("INSERT INTO sentiment (unix, tweet, sentiment) VALUES (?, ?, ?)",
+                    (time_ms, tweet, sentiment))
+                conn.commit()
 
         except KeyError as e:
             print(str(e))
@@ -72,7 +74,7 @@ class listener(StreamListener):
 while True:
 
     try:
-        auth = OAuthHandler(ckey, csecret)
+        auth = OAuthHandler(ckey, csecret)    
         auth.set_access_token(atoken, asecret)
         twitterStream = Stream(auth, listener())
         twitterStream.filter(track=["Bolsonaro", "Lula"], languages=['pt'])
